@@ -50,8 +50,11 @@ class APRSFrameGenerator:
                 pressure_mb = metric.get('pressure') or 1013.25
                 wind_speed_kmh = metric.get('windSpeed') or 0
                 wind_gust_kmh = metric.get('windGust') or 0
+                precip_rate_mm = metric.get('precipRate') or 0  # mm/hr
+                precip_total_mm = metric.get('precipTotal') or 0  # mm/day
             else:
                 temp_c = pressure_mb = wind_speed_kmh = wind_gust_kmh = 0
+                precip_rate_mm = precip_total_mm = 0
         else:
             return "Error: No observation data found in weather data"
         
@@ -61,6 +64,15 @@ class APRSFrameGenerator:
         wind_mph = int(wind_speed_kmh * 0.621371)
         gust_mph = int(wind_gust_kmh * 0.621371)
         pressure_tenths = int(pressure_mb * 10)
+        
+        # Convert precipitation from mm to hundredths of inches for APRS
+        # 1 mm = 0.0393701 inches = 3.93701 hundredths of inches
+        rain_hour_hundredths = int(precip_rate_mm * 3.93701) if precip_rate_mm > 0 else 0
+        rain_24h_hundredths = int(precip_total_mm * 3.93701) if precip_total_mm > 0 else 0
+        
+        # APRS limits: r = 0-999, p = 0-999 (999 means ≥9.99 inches)
+        rain_hour_hundredths = min(rain_hour_hundredths, 999)
+        rain_24h_hundredths = min(rain_24h_hundredths, 999)
         
         # Format timestamp
         if timestamp:
@@ -76,7 +88,7 @@ class APRSFrameGenerator:
         # Create APRS frame
         header = f"{callsign.upper()}>APRS,TCPIP*:"
         weather = (f"@{timestamp_aprs}{coordinates}_{wind_dir:03d}/{wind_mph:03d}"
-                  f"g{gust_mph:03d}t{temp_f:03d}r000p000P{pressure_tenths:04d}"
-                  f"h{humidity:02d}b{pressure_tenths:04d} WX")
+                  f"g{gust_mph:03d}t{temp_f:03d}r{rain_hour_hundredths:03d}p{rain_24h_hundredths:03d}"
+                  f"h{humidity:02d}b{pressure_tenths:05d} WX")
         
         return header + weather
