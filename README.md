@@ -159,15 +159,52 @@ python wunderground_to_aprs_sender.py --schedule --interval 60
 - **5 minutes**: Minimum recommended (shorter intervals may violate APRS-IS guidelines)
 
 ### Running as a Service
-On Windows, you can create a batch file or use Task Scheduler to run the script automatically:
 
-```batch
-@echo off
-cd "C:\path\to\your\script"
-python wunderground_to_aprs_sender.py --schedule --interval 15
+#### Linux Service (Systemd)
+**For automatic startup after reboot and robust service management:**
+
+1. **Quick Setup**:
+   ```bash
+   # Run the installer
+   sudo ./install-service.sh
+   
+   # Configure the service
+   sudo -u aprs /opt/wunderground-to-aprs/venv/bin/python /opt/wunderground-to-aprs/wunderground_to_aprs_sender.py --save-config
+   
+   # Start the service
+   sudo systemctl start wunderground-to-aprs
+   ```
+
+2. **Service Management**:
+   ```bash
+   # Check status
+   sudo systemctl status wunderground-to-aprs
+   
+   # View logs
+   sudo journalctl -u wunderground-to-aprs -f
+   
+   # Restart service
+   sudo systemctl restart wunderground-to-aprs
+   ```
+
+**Features of the Linux service:**
+- ✅ **Auto-start on boot** - Starts automatically after system reboot
+- ✅ **Auto-restart on failure** - Restarts if the process crashes
+- ✅ **Secure execution** - Runs as dedicated non-root user
+- ✅ **System integration** - Full systemd integration with logging
+- ✅ **Easy management** - Standard systemctl commands
+
+See [SERVICE_SETUP.md](SERVICE_SETUP.md) for detailed installation instructions.
+
+#### Mac/Linux (Alternative - Cron)
+Use cron for simpler scheduling without service features:
+```bash
+# Edit crontab
+crontab -e
+
+# Add line for every 15 minutes
+*/15 * * * * cd /path/to/script && python3 wunderground_to_aprs_sender.py
 ```
-
-On Linux/Mac, use cron or systemd for automatic startup and background operation.
 
 ## 🏗️ Project Structure
 
